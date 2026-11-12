@@ -1,0 +1,44 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galactic Defender</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <h1>✦ GALACTIC DEFENDER ✦</h1>
+    <p>DEFEND THE GALAXY. DEFEAT THE INVADERS.</p>
+  </header>
+
+  <section class="hud">
+    <div>SCORE: <span id="score">0</span></div>
+    <div>LIVES: <span id="lives">3</span></div>
+    <div>WAVE: <span id="wave">1</span></div>
+  </section>
+
+  <main>
+    <canvas id="gameCanvas" width="800" height="550"></canvas>
+
+    <div id="overlay">
+      <h2 id="message">GALACTIC DEFENDER</h2>
+      <p id="instructions">
+        Destroy enemy ships and defend the galaxy!
+        <br>Survive three waves and defeat the boss.
+      </p>
+      <button id="startButton">START GAME</button>
+    </div>
+  </main>
+
+  <section class="help">
+    <p>MOVE: WASD or ARROW KEYS</p>
+    <p>SHOOT: SPACEBAR</p>
+    <p>Collect power-ups to gain special abilities!</p>
+  </section>
+
+  <script src="game.js"></script>
+</body>
+</html>
