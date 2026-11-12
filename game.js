@@ -181,6 +181,8 @@ function startBoss() {
 }
 
 function finishGame(won) {
+  if (state !== "playing") return;
+
   state = won ? "win" : "gameover";
 
   overlay.style.display = "flex";
@@ -198,7 +200,7 @@ function distance(a, b) {
 }
 
 function damagePlayer() {
-  if (player.invulnerable > 0) return;
+  if (state !== "playing" || player.invulnerable > 0) return;
 
   if (player.shield > 0) {
     player.shield = 0;
@@ -226,7 +228,7 @@ function update(dt) {
     updateHUD();
   }
 
-  // Background stars
+  // Move background stars
   for (const star of stars) {
     star.y += star.speed * dt;
 
@@ -260,6 +262,7 @@ function update(dt) {
   player.shield = Math.max(0, player.shield - dt);
   player.rapid = Math.max(0, player.rapid - dt);
 
+  // Player shooting
   if (keys.Space && player.cooldown <= 0) {
     shoot();
   }
@@ -275,7 +278,7 @@ function update(dt) {
     }
   }
 
-  // Update enemies
+  // Enemy movement and attacks
   for (const enemy of enemies) {
     if (enemy.type === "scout") {
       const angle = Math.atan2(
@@ -300,7 +303,8 @@ function update(dt) {
       }
     }
 
-    if (distance(player, enemy) < player.radius + enemy.radius) {
+    if (distance(player, enemy) <
+        player.radius + enemy.radius) {
       damagePlayer();
     }
 
@@ -312,13 +316,15 @@ function update(dt) {
 
   enemies = enemies.filter(e => !e.remove);
 
-  // Player bullets
+  // Player lasers
   for (const bullet of bullets) {
     bullet.y -= bullet.speed * dt;
 
     for (const enemy of enemies) {
-      if (!enemy.remove && distance(bullet, enemy) <
+      if (!enemy.remove &&
+          distance(bullet, enemy) <
           bullet.radius + enemy.radius) {
+
         enemy.hp--;
         bullet.remove = true;
 
@@ -337,8 +343,11 @@ function update(dt) {
       }
     }
 
+    // Damage the boss
     if (boss && !bullet.remove &&
-        distance(bullet, boss) < bullet.radius + boss.radius) {
+        distance(bullet, boss) <
+        bullet.radius + boss.radius) {
+
       boss.hp--;
       bullet.remove = true;
 
@@ -396,7 +405,7 @@ function update(dt) {
     p => !p.remove && p.y < HEIGHT + 20
   );
 
-  // Boss movement and attacks
+  // Boss movement and shooting
   if (boss) {
     boss.x += boss.speed * boss.direction * dt;
 
@@ -424,6 +433,7 @@ function update(dt) {
   // Wave progression
   if (!bossActive && enemiesRemaining === 0 &&
       enemies.length === 0) {
+
     transitionTimer += dt;
 
     if (transitionTimer >= 2) {
@@ -439,8 +449,7 @@ function update(dt) {
   }
 }
 
-// Drawing functions
-
+// Draw background stars
 function drawStars() {
   ctx.fillStyle = "#ffffff";
 
@@ -452,6 +461,7 @@ function drawStars() {
   ctx.globalAlpha = 1;
 }
 
+// Draw player spaceship
 function drawPlayer() {
   if (player.invulnerable > 0 &&
       Math.floor(Date.now() / 100) % 2 === 0) {
@@ -490,6 +500,7 @@ function drawPlayer() {
   ctx.restore();
 }
 
+// Draw enemy spaceships
 function drawEnemy(enemy) {
   ctx.save();
   ctx.translate(enemy.x, enemy.y);
@@ -525,12 +536,15 @@ function drawEnemy(enemy) {
 
     ctx.fillStyle = "#22c55e";
     ctx.fillRect(
-      enemy.x - 18, enemy.y - 27,
-      36 * enemy.hp / enemy.maxHp, 4
+      enemy.x - 18,
+      enemy.y - 27,
+      36 * enemy.hp / enemy.maxHp,
+      4
     );
   }
 }
 
+// Draw final boss
 function drawBoss() {
   if (!boss) return;
 
@@ -556,14 +570,14 @@ function drawBoss() {
 
   ctx.restore();
 
-  // Boss health bar
   ctx.fillStyle = "#333";
   ctx.fillRect(180, 25, 440, 13);
 
   ctx.fillStyle = "#ff00ff";
   ctx.fillRect(
     180, 25,
-    440 * Math.max(0, boss.hp) / boss.maxHp, 13
+    440 * Math.max(0, boss.hp) / boss.maxHp,
+    13
   );
 
   ctx.fillStyle = "white";
@@ -572,6 +586,7 @@ function drawBoss() {
   ctx.fillText("BOSS HEALTH", WIDTH / 2, 18);
 }
 
+// Draw everything
 function draw() {
   ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
@@ -579,7 +594,7 @@ function draw() {
 
   if (!player) return;
 
-  // Player bullets
+  // Player lasers
   ctx.shadowBlur = 12;
   ctx.shadowColor = "#00f5ff";
   ctx.fillStyle = "#00f5ff";
@@ -594,7 +609,13 @@ function draw() {
 
   for (const bullet of enemyBullets) {
     ctx.beginPath();
-    ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+    ctx.arc(
+      bullet.x,
+      bullet.y,
+      bullet.radius,
+      0,
+      Math.PI * 2
+    );
     ctx.fill();
   }
 
@@ -604,6 +625,7 @@ function draw() {
     drawEnemy(enemy);
   }
 
+  // Power-ups
   for (const power of powerUps) {
     const colors = {
       shield: "#22c55e",
@@ -616,7 +638,13 @@ function draw() {
     ctx.shadowColor = colors[power.type];
 
     ctx.beginPath();
-    ctx.arc(power.x, power.y, power.radius, 0, Math.PI * 2);
+    ctx.arc(
+      power.x,
+      power.y,
+      power.radius,
+      0,
+      Math.PI * 2
+    );
     ctx.fill();
   }
 
@@ -629,6 +657,7 @@ function draw() {
     ctx.fillStyle = "#00f5ff";
     ctx.font = "bold 28px Courier New";
     ctx.textAlign = "center";
+
     ctx.fillText(
       "WAVE " + (wave + 1),
       WIDTH / 2,
@@ -637,23 +666,14 @@ function draw() {
   }
 }
 
-function gameLoop(time) {
-  const dt = Math.min((time - lastTime) / 1000, 0.04);
-  lastTime = time;
-
-  update(dt);
-  draw();
-
-  requestAnimationFrame(gameLoop);
-}
-
 // Keyboard controls
-
-
 window.addEventListener("keydown", event => {
   if ([
-    "ArrowUp", "ArrowDown",
-    "ArrowLeft", "ArrowRight", " "
+    "ArrowUp",
+    "ArrowDown",
+    "ArrowLeft",
+    "ArrowRight",
+    " "
   ].includes(event.key)) {
     event.preventDefault();
   }
@@ -673,4 +693,25 @@ window.addEventListener("keyup", event => {
   if (event.code === "Space") {
     keys.Space = false;
   }
+});
+
+// Start and restart
+startButton.addEventListener("click", () => {
+  resetGame();
+  state = "playing";
+  overlay.style.display = "none";
+});
+
+// Initialize game
+createStars();
+draw();
+
+requestAnimationFrame(function loop(time) {
+  const dt = Math.min((time - lastTime) / 1000, 0.04);
+  lastTime = time;
+
+  update(dt);
+  draw();
+
+  requestAnimationFrame(loop);
 });
