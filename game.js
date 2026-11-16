@@ -500,7 +500,7 @@ function drawPlayer() {
   ctx.restore();
 }
 
-// Draw enemy spaceships
+// Draw detailed enemy spaceships
 function drawEnemy(enemy) {
   ctx.save();
   ctx.translate(enemy.x, enemy.y);
@@ -511,36 +511,259 @@ function drawEnemy(enemy) {
     heavy: "#a855f7"
   };
 
-  ctx.shadowBlur = 15;
-  ctx.shadowColor = colors[enemy.type];
-  ctx.fillStyle = colors[enemy.type];
+  const color = colors[enemy.type] || "#ff477e";
+  const pulse = 0.75 + Math.sin(Date.now() / 110) * 0.2;
 
+  // Glowing engine exhaust
+  ctx.save();
+  ctx.globalAlpha = pulse;
+  ctx.shadowBlur = 12;
+  ctx.shadowColor = color;
+  ctx.fillStyle = enemy.type === "heavy" ? "#d8b4fe" : "#fff";
   ctx.beginPath();
-  ctx.moveTo(0, 18);
-  ctx.lineTo(22, -10);
-  ctx.lineTo(10, -6);
-  ctx.lineTo(0, -18);
-  ctx.lineTo(-10, -6);
-  ctx.lineTo(-22, -10);
+  ctx.moveTo(-5, 10);
+  ctx.lineTo(-2, 23 + Math.random() * 3);
+  ctx.lineTo(0, 15);
+  ctx.lineTo(2, 23 + Math.random() * 3);
+  ctx.lineTo(5, 10);
   ctx.closePath();
   ctx.fill();
+  ctx.restore();
 
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(-4, -3, 8, 6);
+  ctx.shadowBlur = 16;
+  ctx.shadowColor = color;
+
+  if (enemy.type === "scout") {
+    // SCOUT: fast, narrow ship with swept wings
+    ctx.fillStyle = "#9f1239";
+    ctx.beginPath();
+    ctx.moveTo(0, -19);
+    ctx.lineTo(8, -5);
+    ctx.lineTo(22, 5);
+    ctx.lineTo(13, 8);
+    ctx.lineTo(8, 4);
+    ctx.lineTo(5, 15);
+    ctx.lineTo(-5, 15);
+    ctx.lineTo(-8, 4);
+    ctx.lineTo(-13, 8);
+    ctx.lineTo(-22, 5);
+    ctx.lineTo(-8, -5);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0, -17);
+    ctx.lineTo(5, -3);
+    ctx.lineTo(8, 12);
+    ctx.lineTo(-8, 12);
+    ctx.lineTo(-5, -3);
+    ctx.closePath();
+    ctx.fill();
+
+    // Wing panels
+    ctx.fillStyle = "#fecdd3";
+    ctx.beginPath();
+    ctx.moveTo(-9, 0);
+    ctx.lineTo(-19, 5);
+    ctx.lineTo(-11, 5);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(9, 0);
+    ctx.lineTo(19, 5);
+    ctx.lineTo(11, 5);
+    ctx.closePath();
+    ctx.fill();
+
+    // Cockpit and engine lights
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = "#ffffff";
+    ctx.fillStyle = "#fff1f2";
+    ctx.beginPath();
+    ctx.ellipse(0, -5, 3, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#7f1d1d";
+    ctx.fillRect(-2, 10, 4, 3);
+
+  } else if (enemy.type === "fighter") {
+    // FIGHTER: medium ship with broad wings and twin cannons
+    ctx.fillStyle = "#9a3412";
+    ctx.beginPath();
+    ctx.moveTo(0, -20);
+    ctx.lineTo(10, -8);
+    ctx.lineTo(27, 3);
+    ctx.lineTo(24, 12);
+    ctx.lineTo(11, 8);
+    ctx.lineTo(8, 17);
+    ctx.lineTo(-8, 17);
+    ctx.lineTo(-11, 8);
+    ctx.lineTo(-24, 12);
+    ctx.lineTo(-27, 3);
+    ctx.lineTo(-10, -8);
+    ctx.closePath();
+    ctx.fill();
+
+    // Main armor body
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0, -19);
+    ctx.lineTo(8, -7);
+    ctx.lineTo(10, 12);
+    ctx.lineTo(0, 18);
+    ctx.lineTo(-10, 12);
+    ctx.lineTo(-8, -7);
+    ctx.closePath();
+    ctx.fill();
+
+    // Wing armor plates
+    ctx.fillStyle = "#fdba74";
+    ctx.beginPath();
+    ctx.moveTo(-12, -1);
+    ctx.lineTo(-23, 5);
+    ctx.lineTo(-14, 7);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(12, -1);
+    ctx.lineTo(23, 5);
+    ctx.lineTo(14, 7);
+    ctx.closePath();
+    ctx.fill();
+
+    // Twin weapon pods
+    ctx.fillStyle = "#7c2d12";
+    ctx.fillRect(-21, 5, 5, 9);
+    ctx.fillRect(16, 5, 5, 9);
+
+    ctx.fillStyle = "#fff7ed";
+    ctx.fillRect(-20, 11, 3, 3);
+    ctx.fillRect(17, 11, 3, 3);
+
+    // Cockpit
+    ctx.shadowColor = "#fff";
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = "#ffedd5";
+    ctx.beginPath();
+    ctx.ellipse(0, -6, 5, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Hull seam
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "#7c2d12";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, 2);
+    ctx.lineTo(0, 13);
+    ctx.stroke();
+
+  } else {
+    // HEAVY: large armored battleship with layered plating
+    ctx.fillStyle = "#581c87";
+    ctx.beginPath();
+    ctx.moveTo(0, -24);
+    ctx.lineTo(15, -15);
+    ctx.lineTo(29, -5);
+    ctx.lineTo(25, 13);
+    ctx.lineTo(14, 18);
+    ctx.lineTo(8, 13);
+    ctx.lineTo(-8, 13);
+    ctx.lineTo(-14, 18);
+    ctx.lineTo(-25, 13);
+    ctx.lineTo(-29, -5);
+    ctx.lineTo(-15, -15);
+    ctx.closePath();
+    ctx.fill();
+
+    // Main armored hull
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0, -25);
+    ctx.lineTo(12, -14);
+    ctx.lineTo(17, 5);
+    ctx.lineTo(10, 19);
+    ctx.lineTo(-10, 19);
+    ctx.lineTo(-17, 5);
+    ctx.lineTo(-12, -14);
+    ctx.closePath();
+    ctx.fill();
+
+    // Shoulder armor
+    ctx.fillStyle = "#6b21a8";
+    ctx.beginPath();
+    ctx.moveTo(-13, -12);
+    ctx.lineTo(-27, -4);
+    ctx.lineTo(-22, 10);
+    ctx.lineTo(-13, 6);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(13, -12);
+    ctx.lineTo(27, -4);
+    ctx.lineTo(22, 10);
+    ctx.lineTo(13, 6);
+    ctx.closePath();
+    ctx.fill();
+
+    // Armor highlights
+    ctx.strokeStyle = "#e9d5ff";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-11, -10);
+    ctx.lineTo(-20, -3);
+    ctx.moveTo(11, -10);
+    ctx.lineTo(20, -3);
+    ctx.moveTo(-9, 12);
+    ctx.lineTo(0, 16);
+    ctx.lineTo(9, 12);
+    ctx.stroke();
+
+    // Central glowing core
+    ctx.shadowColor = "#ffffff";
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = "#f5d0fe";
+    ctx.beginPath();
+    ctx.arc(0, -3, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#581c87";
+    ctx.beginPath();
+    ctx.arc(0, -3, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Side energy lights
+    ctx.fillStyle = "#f0abfc";
+    ctx.fillRect(-22, 1, 4, 5);
+    ctx.fillRect(18, 1, 4, 5);
+  }
 
   ctx.restore();
 
+  // Enemy health bar
   if (enemy.hp < enemy.maxHp) {
-    ctx.fillStyle = "#333";
-    ctx.fillRect(enemy.x - 18, enemy.y - 27, 36, 4);
+    const barWidth = enemy.type === "heavy" ? 46 : 36;
+    const barX = enemy.x - barWidth / 2;
+    const barY = enemy.y - enemy.radius - 10;
 
-    ctx.fillStyle = "#22c55e";
+    ctx.fillStyle = "#222";
+    ctx.fillRect(barX, barY, barWidth, 5);
+
+    ctx.fillStyle = color;
     ctx.fillRect(
-      enemy.x - 18,
-      enemy.y - 27,
-      36 * enemy.hp / enemy.maxHp,
-      4
+      barX,
+      barY,
+      barWidth * Math.max(0, enemy.hp) / enemy.maxHp,
+      5
     );
+
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 0.7;
+    ctx.strokeRect(barX, barY, barWidth, 5);
   }
 }
 
