@@ -27,7 +27,7 @@ let stars = [];
 let score = 0;
 let lives = 3;
 let wave = 1;
-
+let gameMode = "campaign";
 let enemiesRemaining = 0;
 let spawnTimer = 0;
 let transitionTimer = 0;
@@ -91,23 +91,27 @@ function startWave() {
   updateHUD();
 }
 
+
 function spawnEnemy() {
-  const roll = Math.random();
+  const availableTypes = ["scout"];
 
-  let type;
+  if (wave >= 2) availableTypes.push("fighter");
+  if (wave >= 3) availableTypes.push("heavy");
+  if (wave >= 4) availableTypes.push("stealth");
+  if (wave >= 5) availableTypes.push("drone");
+  if (wave >= 7) availableTypes.push("support");
 
-  if (roll < 0.45) {
-    type = "scout";
-  } else if (roll < 0.8) {
-    type = "fighter";
-  } else {
-    type = "heavy";
-  }
+  const type = availableTypes[
+    Math.floor(Math.random() * availableTypes.length)
+  ];
 
   const settings = {
-    scout: { radius: 13, hp: 1, speed: 100, points: 10 },
+    scout:   { radius: 13, hp: 1, speed: 100, points: 10 },
     fighter: { radius: 17, hp: 2, speed: 65, points: 20 },
-    heavy: { radius: 23, hp: 4, speed: 38, points: 50 }
+    heavy:   { radius: 23, hp: 4, speed: 38, points: 50 },
+    stealth: { radius: 15, hp: 2, speed: 85, points: 35 },
+    drone:   { radius: 11, hp: 1, speed: 125, points: 15 },
+    support: { radius: 20, hp: 3, speed: 45, points: 60 }
   };
 
   const s = settings[type];
@@ -119,37 +123,13 @@ function spawnEnemy() {
     radius: s.radius,
     hp: s.hp,
     maxHp: s.hp,
-    speed: s.speed + wave * 5,
+    speed: s.speed + wave * 3,
     points: s.points,
     shootTimer: 1.5 + Math.random() * 1.5,
     phase: Math.random() * Math.PI * 2
   });
 }
 
-function shoot() {
-  bullets.push({
-    x: player.x,
-    y: player.y - 18,
-    radius: 4,
-    speed: 460
-  });
-
-  player.cooldown = player.rapid > 0 ? 0.12 : 0.28;
-}
-
-function enemyShoot(enemy) {
-  const dx = player.x - enemy.x;
-  const dy = player.y - enemy.y;
-  const length = Math.hypot(dx, dy) || 1;
-
-  enemyBullets.push({
-    x: enemy.x,
-    y: enemy.y + enemy.radius,
-    vx: (dx / length) * 175,
-    vy: (dy / length) * 175,
-    radius: 5
-  });
-}
 
 function spawnPowerUp(x, y) {
   const types = ["shield", "rapid", "bonus"];
@@ -279,7 +259,11 @@ function update(dt) {
   }
 
   // Enemy movement and attacks
+  
+  // Enemy movement and special abilities
   for (const enemy of enemies) {
+
+    // Scout: follows the player's spaceship
     if (enemy.type === "scout") {
       const angle = Math.atan2(
         player.y - enemy.y,
@@ -288,26 +272,68 @@ function update(dt) {
 
       enemy.x += Math.cos(angle) * enemy.speed * dt;
       enemy.y += Math.sin(angle) * enemy.speed * dt;
+    }
 
-    } else {
+    // Drone: moves quickly and zigzags
+    else if (enemy.type === "drone") {
+      enemy.y += enemy.speed * 1.3 * dt;
+      enemy.x += Math.sin(Date.now() / 180 + enemy.phase) * 90 * dt;
+    }
+
+    // Other enemies move downward
+    else {
       enemy.y += enemy.speed * dt;
       enemy.x += Math.sin(Date.now() / 400 + enemy.phase) * 35 * dt;
+    }
 
-      if (enemy.type === "fighter") {
-        enemy.shootTimer -= dt;
+    // Fighter: shoots at the player
+    if (enemy.type === "fighter") {
+      enemy.shootTimer -= dt;
 
-        if (enemy.shootTimer <= 0) {
-          enemyShoot(enemy);
-          enemy.shootTimer = 2.2;
-        }
+      if (enemy.shootTimer <= 0) {
+        enemyShoot(enemy);
+        enemy.shootTimer = 2.2;
       }
     }
 
-    if (distance(player, enemy) <
-        player.radius + enemy.radius) {
+    // Stealth: periodically becomes invisible
+    if (enemy.type === "stealth") {
+      enemy.cloakTimer = (enemy.cloakTimer || 0) - dt;
+
+      if (enemy.cloakTimer <= 0) {
+        enemy.cloaked = !enemy.cloaked;
+        enemy.cloakTimer = enemy.cloaked ? 1.5 : 2.5;
+      }
+    }
+
+    // Support: heals nearby damaged enemies
+    if (enemy.type === "support") {
+      enemy.healTimer = (enemy.healTimer || 0) - dt;
+
+      if (enemy.healTimer <= 0) {
+        for (const ally of enemies) {
+          if (
+            ally !== enemy &&
+            distance(enemy, ally) < 110 &&
+            ally.hp < ally.maxHp
+          ) {
+            ally.hp = Math.min(ally.maxHp, ally.hp + 1);
+          }
+        }
+
+        enemy.healTimer = 2.5;
+      }
+    }
+
+    // Check collision with player
+    if (
+      distance(player, enemy) <
+      player.radius + enemy.radius
+    ) {
       damagePlayer();
     }
 
+    // Damage player if an enemy escapes
     if (enemy.y > HEIGHT + 30) {
       enemy.remove = true;
       damagePlayer();
@@ -315,6 +341,7 @@ function update(dt) {
   }
 
   enemies = enemies.filter(e => !e.remove);
+
 
   // Player lasers
   for (const bullet of bullets) {
@@ -502,13 +529,17 @@ function drawPlayer() {
 
 // Draw detailed enemy spaceships
 function drawEnemy(enemy) {
-  ctx.save();
+  ctx.save();if (enemy.cloaked) {
+  ctx.globalAlpha = 0.2;
+}
   ctx.translate(enemy.x, enemy.y);
 
   const colors = {
     scout: "#ff477e",
     fighter: "#f97316",
-    heavy: "#a855f7"
+    heavy: "#a855f7"stealth: "#38bdf8",
+  drone: "#facc15",
+  support: "#22c55e"
   };
 
   const color = colors[enemy.type] || "#ff477e";
@@ -741,7 +772,7 @@ function drawEnemy(enemy) {
     ctx.fillRect(-22, 1, 4, 5);
     ctx.fillRect(18, 1, 4, 5);
   }
-
+ctx.globalAlpha = 1;
   ctx.restore();
 
   // Enemy health bar
