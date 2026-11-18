@@ -4,131 +4,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Galactic Defender</title>
-
   <link rel="stylesheet" href="style.css">
-
-  <!-- Build version: change this to a new string on every deployment. -->
-  <meta name="build" content="2026-11-16.1">
-
-  <!-- Cache control -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-
-  <!-- Automatic deployment version checker -->
-  <script>
-  (function () {
-    try {
-      if (location.protocol === "file:") return;
-
-      var buildTag = document.querySelector('meta[name="build"]');
-      if (!buildTag) return;
-
-      var localBuild = buildTag.getAttribute("content");
-
-      var cleanUrl = location.protocol + "//" +
-                     location.host + location.pathname;
-
-      var checkUrl = cleanUrl + "?_v=" + new Date().getTime();
-
-      fetch(checkUrl, { cache: "no-store" })
-        .then(function (response) {
-          if (!response.ok) return null;
-          return response.text();
-        })
-        .then(function (html) {
-          if (!html) return;
-
-          var match = html.match(
-            /<meta\s+name=["']build["']\s+content=["']([^"']+)["']/i
-          );
-
-          if (!match) return;
-
-          var remoteBuild = match[1];
-
-          if (remoteBuild !== localBuild) {
-            var guardKey =
-              "galactic_defender_build_" + location.pathname;
-
-            if (sessionStorage.getItem(guardKey) !== remoteBuild) {
-              sessionStorage.setItem(guardKey, remoteBuild);
-
-              location.replace(
-                cleanUrl + "?_v=" + new Date().getTime()
-              );
-            }
-          }
-        })
-        .catch(function () {
-          // Ignore network errors.
-        });
-
-    } catch (error) {
-      // Ignore cache-checking errors.
-    }
-  })();
-  </script>
 </head>
-
 <body>
+  <main class="game-container">
+    <header>
+      <h1>🚀 GALACTIC DEFENDER</h1>
+      <p>Protect the galaxy. Survive the waves.</p>
+    </header>
 
-  <!-- Game Header -->
-  <header>
-    <h1>✦ GALACTIC DEFENDER ✦</h1>
-    <p>DEFEND THE GALAXY. DEFEAT THE INVADERS.</p>
-  </header>
+    <section class="hud">
+      <div>Score: <span id="score">0</span></div>
+      <div>Lives: <span id="lives">3</span></div>
+      <div>Wave: <span id="wave">1</span></div>
+      <div>Mode: <span id="mode">Campaign</span></div>
+    </section>
 
-  <!-- Game Information -->
-  <section class="hud">
-    <div>SCORE: <span id="score">0</span></div>
-    <div>LIVES: <span id="lives">3</span></div>
-    <div>WAVE: <span id="wave">1</span></div>
-  </section>
+    <div class="canvas-wrap">
+      <canvas id="gameCanvas" width="900" height="600"></canvas>
 
-  <!-- Game Area -->
-  <main>
-
-    <canvas
-      id="gameCanvas"
-      width="800"
-      height="550">
-    </canvas>
-
-    <!-- Start / Game Over Screen -->
-    <div id="overlay">
-
-      <h2 id="message">GALACTIC DEFENDER</h2>
-
-      <p id="instructions">
-        Destroy enemy ships and defend the galaxy!
-        <br>
-        Survive three waves and defeat the boss.
-      </p>
-
-      <button id="startButton">
-        START GAME
-      </button>
-
+      <div id="overlay" class="overlay">
+        <h2 id="message">GALACTIC DEFENDER</h2>
+        <p id="instructions">
+          Defend the galaxy from enemy spaceships!
+          <br>Move with WASD or arrow keys.
+          <br>Shoot with SPACE.
+        </p>
+        <div class="menu-buttons">
+          <button id="startButton">CAMPAIGN MODE</button>
+          <button id="infiniteButton">INFINITE MODE</button>
+        </div>
+      </div>
     </div>
 
+    <p class="controls">
+      MOVE: WASD / ARROW KEYS &nbsp; | &nbsp; SHOOT: SPACE
+    </p>
   </main>
 
-  <!-- Instructions -->
-  <section class="help">
-
-    <p>MOVE: WASD or ARROW KEYS</p>
-
-    <p>SHOOT: SPACEBAR</p>
-
-    <p>Collect power-ups to gain special abilities!</p>
-
-  </section>
-
-  <!-- Game JavaScript -->
   <script src="game.js"></script>
-
 </body>
 </html>
